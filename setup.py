@@ -53,7 +53,7 @@ setup(
         'minitage.recipe.common',
         'iniparse',
     ],
-    extras_require={'test': ['IPython', 'zope.testing', 'mocker']},
+    extras_require={'test': ['IPython', 'zope.testing', 'mocker', 'virtualenv']},
     #tests_require = ['zope.testing'],
     #test_suite = '%s.tests.test_suite' % name,
     # adding zdu, setuptools seems to order recipes executions

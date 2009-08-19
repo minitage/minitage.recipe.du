@@ -29,19 +29,10 @@
 
 __docformat__ = 'restructuredtext en'
 
-import datetime
-import imp
-import logging
 import os
-import setuptools.archive_util
-import sha
 import shutil
-import sys
-import tempfile
-import urllib2
-import urlparse
 
-from minitage.recipe import common
+from minitage.recipe.common import common
 from minitage.core import core
 
 class Recipe(common.MinitageCommonRecipe):
@@ -118,14 +109,13 @@ class Recipe(common.MinitageCommonRecipe):
             # executing pre-hook.
             self._call_hook('post_setup_hook')
             self.logger.info('Installation completed.')
+            shutil.rmtree(self.tmp_directory)
 
         except Exception, e:
             self.logger.error('Compilation error. The package is left as is at %s where '
                       'you can inspect what went wrong' % self.tmp_directory)
             self.logger.error('Message was:\n\t%s' % e)
-            raise core.MinimergeError('Recipe failed, cant install.')
 
-        shutil.rmtree(self.tmp_directory)
 
         os.chdir(self.buildout['buildout']['directory'])
 

@@ -6,6 +6,7 @@ minitage.recipe:fetch
 
 Abstract
 -----------------
+    - you need virtualenv and zc.buildout to run tests.
     - This recipe can be used to fetch something from somewhere to some location of your local fileystem
       This something can be either an url or a set of urls.
     - Thus by:
@@ -19,103 +20,109 @@ Abstract
 Specific options
 -----------------
 
-* urls
-  See the shared options for more information on how to set them.
-* For the static fetcher, you can precise md5sum in the 'revision' field.
-* set unpack to automaticly unpack a downloaded archive, like::
-    
-    [foo]
-    unpack=True
+- *site-packages* : where to drop the builded python files
 
-Detailled documentation
--------------------------
-The divide url function test::
+Specific hooks
+---------------
 
-    - If you dont precise the directory, its the basename of the url::
-
-        >>> divide_url ('http://foo/bar|svn|666||--ignore-externals')
-        ('http://foo/bar', 'svn', '666', 'http.foo.bar', '--ignore-externals')
-
-    - Static as a default::
-
-        >>> divide_url ('')
-        ('', 'static', '', '', '')
-
-    - arguements can be optionnal::
-
-        >>> divide_url ('http://foo/bar')
-        ('http://foo/bar', 'static', '', 'http.foo.bar', '')
+- *pre_setup_hook* : before python setup.py build dance is called
+- *pre_install_hook* : before python setup.py install dance is called
+- *post_setup_hook* : after python setup.py install dance is called
 
 
-Let's create a buildout configuration file::
+Let's create a buildout configuration file
+-------------------------------------------
+::
 
     >>> rmdir(tempdir)
     >>> mkdir(tempdir)
     >>> cd(tempdir)
     >>> a = [mkdir(d) for d in ('eggs', 'develop-eggs', 'bin', 'src')]
-    >>> install_develop_eggs(['minitage.recipe'])
+    >>> install_develop_eggs(['minitage.recipe.du'])
     >>> install_eggs_from_pathes(['zc.buildout'], sys.path)
     >>> touch('buildout.cfg')
-    >>> sh('buildout -o bootstrap')
-    buildout -o bootstrap...
-
+    >>> sh('virtualenv --no-site-packages .')
+    virtualenv --no-site-packages .
+    Using real prefix '/usr'
+    New python executable in ./bin/python
+    Installing setuptools............done.
+    <BLANKLINE>
+    <BLANKLINE>
+    >>> sh('bin/easy_install -U zc.buildout')
+    bin/easy_install -U zc.buildout...
+    Finished processing dependencies for zc.buildout
+    <BLANKLINE>
+    <BLANKLINE>
+    >>> sh('bin/buildout -o bootstrap')
+    bin/buildout -o bootstrap...
 
 Initializing test env.
+-----------------------------
+::
 
     >>> if not os.path.exists('foo'):
     ...     mkdir('foo')
     ... else:
     ...     rmdir(foo)
     ...     mkdir('foo')
-    >>> touch('foo/configure', data ="""echo configure $@\n""")
-    >>> sh('chmod +x foo/configure')
-    c...
-    >>> touch('foo/Makefile',
-    ... data = """
-    ... all:
-    ... \t@echo all
-    ...
-    ... install:
-    ... \t@echo install
+    >>> touch('foo/setup.py', data="""
+    ... from setuptools import setup
+    ... setup(name='foo', version='1.0')
     ...
     ... """)
-    >>> sh('tar cfz  foo.tgz foo')
-    tar cfz  ...
-    <BLANKLINE>
+    >>> touch('foo/toto.py', data="""
+    ... def f():
+    ...     print "foo"
+    ...
+    ... """)
+    >>> noecho = [os.remove(d) for d in os.listdir('.') if '.tar.gz' in d]
+    >>> os.chdir('foo')
+    >>> sh('python setup.py sdist')
+    p...
+    >>> noecho = [shutil.copy(os.path.join('dist', d), os.path.join('..', d)) for d in os.listdir('dist')]
+    >>> os.chdir('..')
 
 
-Downloading some urls, files, git checkouts with one in a particular checkout directory and a particular revision::
+
+Installing "A la python setup.py install"
+--------------------------------------------
+
+You can also install directly from urls.
+we ll use it to check the already present distribution files in the cache.
 
     >>> data = """
     ... [buildout]
-    ... download-cache=${buildout:directory}
-    ... parts =
-    ...     part
-    ... [part]
-    ... recipe=minitage.recipe:fetch
-    ... urls =file://${buildout:directory}/foo.tgz
-    ...        http://git.minitage.org/git/minitage/eggs/minitage.core|git
-    ...        http://git.minitage.org/git/minitage/eggs/minitage.recipe|git|e1f30b9d7a89572fa87fe26f8e353304532a281c|minitage.recipe.alt
+    ... parts=ez
+    ... [ez]
+    ... executable = ${buildout:directory}/bin/python
+    ... recipe = minitage.recipe.du
+    ... url = file://${buildout:directory}/foo-1.0.tar.gz
+    ... site-packages=${buildout:directory}/myfoo
     ... """
     >>> touch('buildout.cfg', data=data)
-    >>> sh('bin/buildout install part')
-    bin/buildout  install part...
-    minitage.recipe: Start checkouts
+    >>> sh('bin/buildout -vvvvvv install ez')
+    b...
+    Installing ez.
+    minitage.recipe: Installing python package.
     minitage.recipe: Download archive
-    minitage.recipe: Downloading file:///tmp/buildout.test/foo.tgz in /tmp/buildout.test/parts/part/foo.tgz
-    minitage.recipe: Completed dowbload of file:///tmp/buildout.test/foo.tgz in /tmp/buildout.test/parts/part/
-    minitage.recipe: Download archive
+    minitage.recipe: Searching cache at ...
+    minitage.recipe: Using cache file in /home/kiorky/.buildout/downloads/minitage/foo-1.0.tar.gz
+    minitage.recipe: Unpacking in /tmp/buildout.test/__minitage__ez__tmp.
+    minitage.recipe: Guessing compilation directory
     minitage.recipe: Setting path
-    Initialized empty Git repository in /tmp/buildout.test/parts/part/minitage.recipe.alt/.git/
-    HEAD is now at e1f30b9 0.28
-    minitage.recipe: Completed dowbload of http://git.minitage.org/git/minitage/eggs/minitage.recipe in /tmp/buildout.test/parts/part/minitage.recipe.alt
-    minitage.recipe: Download archive
+    minitage.recipe: Setting pkgconfigpath
     minitage.recipe: Setting path
-    Initialized empty Git repository in /tmp/buildout.test/parts/part/http.git.minitage.org.git.minitage.eggs.minitage.core/.git/
-    HEAD is now at ...
-    minitage.recipe: Completed dowbload of http://git.minitage.org/git/minitage/eggs/minitage.core in /tmp/buildout.test/parts/part/http.git.minitage.org.git.minitage.eggs.minitage.core
-    minitage.recipe: Finnished checkouts...
-    <BLANKLINE>
-    g...
+    minitage.recipe: Setting path
+    minitage.recipe: Setting compilation flags
+    minitage.recipe: Running "/tmp/buildout.test/bin/python" setup.py build
+    running build
+    minitage.recipe: Setting path
+    minitage.recipe: Running "/tmp/buildout.test/bin/python" setup.py install --install-purelib="/tmp/buildout.test/myfoo"  --install-platlib="/tmp/buildout.test/myfoo" --prefix=/tmp/buildout.test
+    running install
+    running bdist_egg
+    running egg_info...
+    Copying foo-1.0-py2.6.egg to /tmp/buildout.test/myfoo...
+    Installed /tmp/buildout.test/myfoo/foo-1.0-py...egg...
     <BLANKLINE>
 
+.. vim:set ft=doctest :
