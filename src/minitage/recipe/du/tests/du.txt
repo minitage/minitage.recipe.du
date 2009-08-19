@@ -7,18 +7,11 @@ minitage.recipe:fetch
 Abstract
 -----------------
     - you need virtualenv and zc.buildout to run tests.
-    - This recipe can be used to fetch something from somewhere to some location of your local fileystem
-      This something can be either an url or a set of urls.
-    - Thus by:
-
-        * git
-        * svn
-        * ftp, http, file:// (urllib)
-        * bazaar
-        * mercurial
+    - This recipe can be used to install python packages in a specific directory aLaDisutils way (python setup.py build && python setup.py install)
 
 Specific options
 -----------------
+Please look for options at : http://pypi.python.org/pypi/minitage.recipe.common#options-shared-by-all-the-recipes
 
 - *site-packages* : where to drop the builded python files
 
