@@ -31,7 +31,10 @@ __docformat__ = 'restructuredtext en'
 
 import os
 import shutil
+import time
+from distutils.dir_util import copy_tree
 
+from minitage.core.common import remove_path
 from minitage.recipe.common import common
 from minitage.core import core
 
@@ -122,7 +125,7 @@ class Recipe(common.MinitageCommonRecipe):
         return []
 
     def update(self):
-        pass
+        return self.install()
 
     def _build_python_package(self, directory):
         """Compile a python package."""
@@ -162,22 +165,25 @@ class Recipe(common.MinitageCommonRecipe):
             '--prefix=%s' % self.buildout['buildout']['directory']
         )
         # moving and restoring if problem :)
+
         cwd = os.getcwd()
         os.chdir(directory)
-        tmp = '%s.old' % self.site_packages_path
+        tmp = '%s.%s.old' % (int(time.time()*1000), self.site_packages_path)
         if os.path.exists(self.site_packages_path):
-            shutil.move(self.site_packages_path, tmp)
-
+            if os.path.exists(tmp):
+                remove_path(tmp)
+            copy_tree(self.site_packages_path, tmp)
         if not self.options.get('noinstall', None):
             try:
-                os.makedirs(self.site_packages_path)
+                if not os.path.exists(self.site_packages_path):
+                    os.makedirs(self.site_packages_path)
                 self._system(cmd)
             except Exception, e:
-                shutil.rmtree(self.site_packages_path)
-                shutil.move(tmp, self.site_packages_path)
+                remove_path(tmp)
+                copy_tree(tmp, self.site_packages_path)
                 raise core.MinimergeError('PythonPackage Install failed:\n\t%s' % e)
         if os.path.exists(tmp):
-            shutil.rmtree(tmp)
+            remove_path(tmp)
         os.chdir(cwd)
 
 
