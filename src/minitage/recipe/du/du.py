@@ -46,7 +46,6 @@ class Recipe(common.MinitageCommonRecipe):
         common.MinitageCommonRecipe.__init__(self,
                                     buildout, name, options)
 
-
     def install(self):
         """installs a python package using distutils.
 
@@ -162,7 +161,7 @@ class Recipe(common.MinitageCommonRecipe):
             self.executable,
             '--install-purelib="%s"' % self.site_packages_path,
             '--install-platlib="%s"' % self.site_packages_path,
-            '--prefix=%s' % self.buildout['buildout']['directory']
+            '--prefix=%s' % self.prefix
         )
         # moving and restoring if problem :)
 
