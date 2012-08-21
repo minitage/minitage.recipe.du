@@ -14,8 +14,7 @@ environment.
 
 You can browse the code on minitage's following resources:
 
-    - http://git.minitage.org/git/minitage/eggs/minitage.recipe.du/
-    - http://www.minitage.org/trac/browser/minitage/eggs/minitage.recipe.du
+    - https://github.com/minitage/minitage.recipe.du
 
 ======================================
 Makina Corpus sponsored software
