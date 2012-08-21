@@ -6,7 +6,7 @@ CHANGELOG
 1.59 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- doc
 
 
 1.58 (2012-08-21)
